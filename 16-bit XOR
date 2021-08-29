@@ -1,0 +1,31 @@
+//16 bit xor operation using generate
+//module description
+
+module xor_bitwise(a, b, c);
+  parameter n=16;
+  input [n-1:0]a,b;
+  output [n-1:0]c;
+  genvar p;
+  generate for (p=0; p<n; p=p+1)
+    begin 
+      xor X (c[p], b[p], a[p]);
+    end
+  endgenerate
+endmodule
+
+//tetsbench 
+
+module testxor;
+  reg [15:0]x,y;
+  wire [15:0]z;
+  xor_bitwise DUT(x, y, z);
+  initial
+    begin
+      $dumpfile("design.vcd");
+      $dumpvars(0,testxor);
+      $monitor(" x:%b, y:%b, z:%b", x, y, z);
+      x = 16'haaaa; y = 16'h00ff;
+      #10 x = 16'hacde; y = 16'h3210;
+      #20 $finish;
+  end
+endmodule
