@@ -1,0 +1,52 @@
+//8 bit ring counter
+// module description
+
+module rc8(in, count, clock);
+  input in, clock;
+  output reg [7:0]count;
+  always @ (posedge clock)
+    begin
+      if (in==1) count = 8'b10000000;
+      else 
+        begin
+          count <= count << 1;
+          count[0] <= count[7];
+        end
+    end
+endmodule
+
+// testbench
+
+module tbrc8;
+  reg in, clk;
+  wire [7:0]c;
+  
+  initial clk=0;
+  always #5 clk=~clk;
+  
+  rc8 DUT(in, c, clk);
+  initial
+    begin
+       $dumpfile("design.vcd");
+       $dumpvars(0,tbrc8);
+      $monitor($time, " clk = %b, in = %b , c=%b", clk, in, c);
+       #5 in=1;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 in=0;
+       #5 $finish;
+ 
+  end
+endmodule
