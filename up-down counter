@@ -1,0 +1,52 @@
+//8-bit up-down counter
+//module description
+
+module udcount (din, count, clk, clr, ld, mode);
+  output reg [7:0]count;
+  input [7:0]din;
+  input clk, clr, ld, mode;
+  always @ (posedge clk)
+    if (ld==1) count <= din;
+  else if(clr==1) count <= 0;
+  else if(mode==1) count <= count+1;
+  else count <= count-1;
+endmodule
+
+// testbench 
+
+module testud;
+  reg [7:0]in;
+  reg clock, clear, load, mode;
+  wire [7:0]c;
+  
+  initial clock = 0;
+  always #5 clock = ~clock;
+  
+  udcount DUT(in, c, clock, clear, load, mode);
+  initial
+  begin
+    $dumpfile("design.vcd");
+    $dumpvars(0,testud);
+    $monitor($time," clock=%b, load=%b, input=%b, mode=%b, clear=%b, c=%b" , clock, load, in, mode, clear, c);
+    #5 load = 1; in = 8'b10001101; mode = 0; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 1; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 1; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 1; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 0; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 0; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 0; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 0; clear =0;
+    #5 load = 0; in = 8'b10001101; mode = 0; clear =1;
+   
+    #10 load = 1; in = 8'b11011001; mode = 0; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 1; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 1; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 1; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 0; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 0; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 0; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 0; clear =0;
+    #5 load = 0; in = 8'b11011001; mode = 0; clear =1;
+    #5 $finish;
+  end
+endmodule
