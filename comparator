@@ -1,0 +1,24 @@
+//UDP for 3 bit comparator
+primitive comparator(C, A1, A2, A3, B1, B2, B3);
+input  A1, A2, A3, B1, B2, B3;
+output C;
+table
+  // A1A2A3 B1B2B3 C
+      1 ? ? 0 ? ?: 1;
+      ? 1 ? 0 0 ?: 1;
+      ? ? 1 0 0 0: 1;
+      0 ? ? 1 ? ?: 0;
+      0 0 ? ? 1 ?: 0;
+      0 0 0 ? ? 1: 0;
+      1 1 1 1 1 1: 0;
+      1 1 0 1 1 0: 0;
+      1 0 1 1 0 1: 0;
+      1 0 0 1 0 0: 0;
+      0 1 1 0 1 1: 0;
+      0 1 0 0 1 0: 0;  
+      0 0 1 0 0 1: 0;
+      0 0 0 0 0 0: 0;
+endtable
+endprimitive
+
+// testbench
