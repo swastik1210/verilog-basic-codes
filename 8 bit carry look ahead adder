@@ -1,0 +1,61 @@
+// 8 bit carry look ahead adder using generate function
+// module description
+
+module RCA(cout, sum, a, b, cin);
+  parameter N=8;
+  input [N-1:0]a, b;
+  input cin;
+  output [N-1:0]sum;
+  output cout;
+  wire [N:0]carry;
+  assign carry[0] = cin;
+  assign cout = carry[N];
+  genvar i;
+  generate for( i=0; i<N; i=i+1)
+    begin
+      wire t1, t2, t3;
+      xor X1(t1, a[i], b[i]), X2(sum[i], t1, carry[i]);
+      and A1(t2, a[i], b[i]), A2(t3, t1, carry[i]);
+      or O1(carry[i+1], t2, t3);
+    end
+  endgenerate
+endmodule
+
+// testbench 
+
+module tbcarryahead;
+  reg [7:0]a,b;
+  reg carryin;
+  wire [7:0]sum;
+  wire carryout;
+  RCA DUT(.cout(carryout), .sum(sum), .a(a), .b(b), .cin(carryin));
+  initial
+    begin
+      $dumpfile("design.vcd");
+      $dumpvars(0, tbcarryahead);
+      $monitor (" a= %b + b= %b + carryin= %b = sum= %b, carryout= %b ", a,b,carryin,sum,carryout);
+      a= 8'b00000001; b= 8'b00000000; carryin= 1'b0;
+      #5 a= 8'b00000001; b= 8'b00000001; carryin= 1'b0;
+      #5 a= 8'b00000001; b= 8'b00000000; carryin= 1'b1;
+      #5 a= 8'b00000001; b= 8'b00000001; carryin= 1'b1;
+      #5 a= 8'b00000010; b= 8'b00000000; carryin= 1'b0;
+      #5 a= 8'b00000010; b= 8'b00000000; carryin= 1'b1;
+      #5 a= 8'b00000010; b= 8'b00000001; carryin= 1'b0;
+      #5 a= 8'b00000010; b= 8'b00000010; carryin= 1'b1;
+      #5 a= 8'b00000010; b= 8'b00000010; carryin= 1'b0;
+      #5 a= 8'b00000010; b= 8'b00000001; carryin= 1'b1;
+      #5 a= 8'b00000010; b= 8'b00000001; carryin= 1'b0;
+      #5 a= 8'b00000010; b= 8'b00000001; carryin= 1'b1;
+      #5 a= 8'b00000010; b= 8'b00001001; carryin= 1'b0;
+      #5 a= 8'b00000010; b= 8'b00000001; carryin= 1'b1;
+      #5 a= 8'b00000011; b= 8'b00100000; carryin= 1'b0;
+      #5 a= 8'b00000011; b= 8'b10000000; carryin= 1'b1;
+      #5 a= 8'b00000011; b= 8'b00000001; carryin= 1'b0;
+      #5 a= 8'b00000011; b= 8'b00010001; carryin= 1'b1;
+      #5 a= 8'b00000011; b= 8'b01000010; carryin= 1'b0;
+      #5 a= 8'b00000011; b= 8'b00000010; carryin= 1'b1;
+      #5 a= 8'b00000011; b= 8'b00000011; carryin= 1'b0;
+      #5 a= 8'b00000011; b= 8'b00000011; carryin= 1'b1;
+      #5 $finish;
+    end
+endmodule
