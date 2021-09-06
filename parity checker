@@ -1,0 +1,60 @@
+// parity checker
+// 0 for even parity
+// 1 for odd parity
+
+//module desciption
+
+module parity_gen (clock, x, z);
+  input x,clock;
+  output reg z;
+  parameter EVEN=0, ODD=1;
+  reg even_odd;
+  always @(posedge clock)
+    case( even_odd)
+      EVEN: even_odd <= x?ODD:EVEN;
+      ODD: even_odd <= x?EVEN:ODD;
+      default: even_odd <= EVEN;
+    endcase
+  always @(even_odd)
+    case (even_odd)
+      EVEN: z=0;
+      ODD: z=1;
+    endcase
+endmodule
+    
+// testbench
+
+module check_parity;
+  wire z;
+  reg clk,x;
+  parity_gen DUT (clk, x, z);
+  initial clk=0;
+  always #5 clk= ~clk;
+    initial 
+     begin
+      $dumpfile("design.vcd");
+      $dumpvars(0,check_parity);
+      $monitor($time, " x =%b => z =%b ",x,z);
+      #5 x=0;
+      #10 x=0;
+      #10 x=1;
+      #10 x=0;
+      #10 x=1;
+      #10 x=1;
+      #10 x=0;
+      #10 x=1;
+      #10 x=0;
+      #10 x=1;
+      #10 x=1;
+      #10 x=0;
+      #10 x=0;
+      #10 x=0;
+      #10 x=1;
+      #10 x=0;
+      #10 x=0;
+      #10 x=1;
+      #10 x=1;
+      #10 x=1;
+      #10 $finish;
+    end
+endmodule
