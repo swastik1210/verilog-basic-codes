@@ -1,0 +1,50 @@
+ Implement a FSM that realizes the operation of a timer. On activating the timer, it will remain active illuminating an indicator light for three clock cycles.
+ off, on1, on2, on3 represent the 4 states of the counter.
+ deact and acti represents that the timer is in ON condition or OFF condition
+ 
+ // module description
+ 
+ module bp(x,y,clk,PS);
+  output reg x;
+  output reg [1:0]PS;
+  input y,clk;
+  parameter deact=0,acti=1;
+  parameter off=0,on1=1,on2=2,on3=3;
+  always @(posedge clk)
+    case(PS)
+     off: PS<= y?on1:off;
+     on1:PS<=on2;
+     on2:PS<=on3;
+     on3:PS<=off;
+     default:PS<=off;
+    endcase
+  always @ (PS)
+    case(PS)
+      off: x=deact;
+      on1,on2,on3: x=acti;
+    endcase
+endmodule
+
+// testbench
+
+module tb;
+  wire x;
+  wire [1:0]PS;
+  reg y,clk;
+  bp DUT(x,y,clk,PS);
+  initial clk=0;
+  always #5clk=~clk;
+  initial
+    begin
+      $dumpfile("design.vcd");
+      $dumpvars(0,tb);
+      $monitor($time, " PS=%b, y=%b => x=%b ",PS,y,x);
+      #5
+      #10 y=0;
+      #10 y=1;
+      #10 y=1;
+      #10 y=1;
+      #10 y=1;
+      #5 $finish;
+    end
+endmodule
