@@ -1,0 +1,122 @@
+//multiplication by repeated addition
+
+module MULadd(lda,ldp,ldb,decb,clrp,eqz,data_in,clk,x,y,z,bout);
+  input [15:0]data_in;
+  input lda,ldp,ldb,clrp,decb,clk;
+  output eqz;
+  output [15:0]x,y,z,bout;
+  PIPO1 A(x,data_in,lda,clk);           //register for A
+  PIPO2 P(y,z,ldp,clrp,clk);            //register for P
+  CNTRL B(bout,data_in,decb,clk,ldb);   //down counter for B
+  ADD AD(z,x,y);            //adder
+  EQZ COMP(eqz,bout);       //comparator
+endmodule
+
+module PIPO1 (dout, din, ld, clk);
+  input [15:0]din;
+  input ld,clk;
+  output reg [15:0]dout;
+  always @(posedge clk)
+    if(ld)
+      dout<=din;
+endmodule
+
+module ADD (out,in1,in2);
+  input [15:0]in1,in2;
+  output reg [15:0]out;
+  always @ (*)
+    out=in1+in2;
+endmodule
+
+module PIPO2 (dout,din,clr,clk,ld);
+  input [15:0]din;
+  input clr,clk,ld;
+  output reg [15:0]dout;
+  always @ (posedge clk)
+  if (clr) dout<=16'b0;
+  else if (ld) dout<=din;
+endmodule
+
+module EQZ (eqz,data);
+  input [15:0]data;
+  output eqz;
+  assign eqz=(data==0);
+endmodule
+
+module CNTRL (dout,din,dec,clk,ld);
+  output reg[15:0]dout;
+  input [15:0]din;
+  input ld,dec,clk;
+  always @(posedge clk)
+    if (ld) dout<=din;
+  else if (dec) dout<=dout-1;
+endmodule
+
+module controller(lda,ldp,ldb,clrp,decb,done,clk,eqz,start);
+  input clk,start,eqz;
+  output reg lda,ldp,ldb,clrp,decb,done;
+  reg [2:0]state;
+  parameter s0=3'b000,s1=3'b001,s2=3'b010,s3=3'b011,s4=3'b100;
+  always @(posedge clk)
+    begin
+      case(state)
+        s0:if (start) state<=s1;
+        s1:state<=s2;
+        s2:state<=s3;
+        s3:#2 if(eqz) state<=s4;
+        s4:state<=s4;
+        default: state<=s0;
+      endcase
+    end
+  always @(state)
+    begin
+      case(state)
+        s0:begin
+          #1 lda=0;ldp=0;clrp=0;ldb=0;decb=0;end
+        s1:begin
+          #1 lda=1;end
+        s2:begin
+          #1 lda=0;ldb=1;clrp=1; end
+        s3:begin
+          #1 ldb=0;ldp=1;clrp=0;decb=1; end
+        s4:begin
+          #1 done=1;ldb=0;ldp=0;decb=0; end
+        default: begin
+          #1 lda=0;ldb=0;ldp=0;clrp=0;decb=0;done=0; end
+      endcase
+    end
+endmodule
+
+//testbench
+
+module tb;
+  reg [15:0]data_in;
+  reg clk,start;
+  wire done;
+  wire [15:0]x,y,z,bout;
+  
+  MULadd M(lda,ldp,ldb,decb,clrp,eqz,data_in,clk,x,y,z,bout);
+  controller C(lda,ldp,ldb,clrp,decb,done,clk,eqz,start);
+ assign y=0,z=0; 
+  initial
+    begin
+      clk=1'b0;
+      #3 start=1'b1;
+      #500 $finish;
+    end
+  always #5 clk=~clk;
+  initial
+    begin
+     #17 data_in=17;
+     #10 data_in=5;
+    end
+
+  initial
+    begin
+      
+     $dumpfile("design.vcd");
+     $dumpvars(0,tb);
+      $monitor($time, " data = %d, x = %d, z = %d %d %d  %b",M.data_in,M.x,M.z,M.B.dout,M.y,done);
+     
+    end
+endmodule
