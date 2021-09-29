@@ -1,0 +1,52 @@
+// 4x32 RAM 
+
+// module description
+// 4x32 RAM without clk
+module ram1(data_out,data_in,addr,wr,cs);
+  parameter addr_size=10,word_size=8,memory_size=1024;
+  input cs,wr;
+  input [word_size-1:0]data_in;
+  input [addr_size-1:0]addr;
+  output reg[word_size-1:0]data_out;
+  reg [word_size-1:0]mem[memory_size-1:0];
+  //read statement
+  always @(cs or wr)
+    if(cs && wr)
+      mem[addr]=data_in;
+     assign data_out=mem[addr];
+endmodule
+
+//testbench 
+
+module ramtb;
+  wire [7:0]data_out;
+  reg select,write;
+  reg [7:0]data_in;
+  reg [9:0]addr;
+  integer k,ms;
+  
+  ram1 RAM1(data_out,data_in,addr,write,select);
+
+  
+  //write and read operation
+  initial
+    begin
+      for(k=0;k<1024;k=k+1)
+        begin
+          data_in=(k+k)%256;write=1;select=1;
+          #2 addr=k;write=0;select=0;
+        end
+      repeat(20)
+        begin
+          #2 addr=$random(ms)%1024;
+          write=0;select=1;
+          $display(" address:=%5d, data:=%4d ",addr,data_out);
+        end
+    end 
+  initial ms=250;
+  initial 
+    begin
+      $dumpfile("design.vcd");
+      $dumpvars(0,ramtb);
+    end
+endmodule
