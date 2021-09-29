@@ -1,0 +1,170 @@
+// It is required to design a hardware module to compute the sum of the first n terms from natural number series 1,2,… by implementing the data path and control path separately.
+// The operation will take as input the number of terms n that is to be added and produces sum as output.For n=3, the designed module must provide output as sum = 1 + 2 + 3 =6
+// At the beginning a registers N will be loaded with an integer value n, a counter C and a register R will be initialized to 0.
+// At each iteration, the value of counter C will be added to the value of register R, the result will be stored back in R and the counter value will be incremented by 1.
+// The process will continue as long as C < N. At the end, R will contain the result.
+// The data path will consist of two 8-bit registers N and R, an 8-bit counter C, an 8-bit adder and an 8-bit comparator. 
+// The comparator takes two numbers N and C as inputs and outputs CltN = 0, if C < N; otherwise it will give CltN = 1.
+// The control path will implement a FSM with states S0 to S3, and generate the following active-high control signals in synchronism with the positive and negative clock edge.
+
+// For N & R registers
+
+module PIPO(data_out,data_in,clr,ld,clk);
+  input [7:0]data_in;
+  input clr,ld,clk;
+  output reg [7:0]data_out;
+  always @(posedge clk)
+    begin
+      if(clr)
+      data_out<=8'b0;
+      else data_out<=data_in;
+    end
+endmodule
+
+// incrementor 
+
+module CTRL(clr,inc,clk,out);
+  input clr,inc,clk;
+  output reg [7:0]out;
+  always @(negedge clk)
+    begin
+      if(clr)
+        out<=8'b0;
+      else if(inc)
+        out<=out+1;
+    end
+endmodule
+
+//adder for the output
+
+module adder(dout,in1,in2);
+  input [7:0]in1,in2;
+  output [7:0]dout;
+  assign dout=in1+in2;
+endmodule
+
+//comparator for checking when the C==R
+
+module CMP(cmp,in1,in2);
+  input [7:0]in1,in2;
+  output cmp;
+  assign cmp= in1<in2?0:1;
+endmodule
+
+// datapath for the hardware
+
+module datapath(cltn,loadr,loadn,clr,incc,data_in,clk);
+  input loadr,loadn,clr,clk,incc;
+  input [7:0]data_in;
+  output cltn;
+  wire [7:0]nw,rw,cw,aw;
+  
+  PIPO N(nw,data_in,clr,loadn,clk);
+  PIPO R(rw,aw,clr,loadr,clk);
+  CTRL C(clr,incc,clk,cw);
+  adder a(aw,rw,cw);
+  CMP comp(cltn,cw,nw);
+endmodule
+
+//control path for the hardware
+
+module controlpath(cltn,loadr,loadn,clr,incc,clk,start,stop);
+  input clk,start,cltn;
+  output reg loadr,loadn,clr,incc,stop;
+  
+  reg [1:0]state;
+  parameter s0=2'b00,s1=2'b01,s2=2'b10,s3=2'b11;
+  
+  always @(posedge clk)
+    begin
+      case(state)
+        s0: if(start)
+          state<=s1;
+        s1:state<=s2;
+        s2: if (cltn==0)
+          state<=s2;else state<=s3;
+        s3:state<=s3;
+        default:state<=s0;
+      endcase
+    end
+  always @(state)
+    begin
+      case(state)
+        s0:begin 
+          #1 loadr=0;loadn=0;clr=1;incc=0;stop=0;end
+        s1:begin
+          #1 loadn=1;clr=0;end
+        s2:begin
+          #1 loadn=0;loadr=1;incc=1;end
+        s3:begin
+          #1 loadr=0;loadn=0;incc=0;stop=1;end
+        default: begin
+          #1 loadr=0;loadn=0;clr=1;incc=0;stop=0;end
+      endcase
+    end
+endmodule
+
+//testbench
+
+// test bench not working properly 
+// single test bench is used by ajusting the timing value to get the value
+// for in 4
+
+module tb;
+  wire stop;
+  reg [7:0]data_in;
+  reg clk,start;
+  
+  datapath DP(cltn,loadr,loadn,clr,incc,data_in,clk);
+  controlpath CP(cltn,loadr,loadn,clr,incc,clk,start,stop);
+  
+  initial
+      clk=1'b0;
+  always #5 clk=~clk;
+
+// input values to check the sum of series
+  
+  initial
+    begin
+      #10 start=1; data_in=0;
+      #10 start=1; data_in=4;
+      
+     
+      #50 $finish;
+    end
+
+
+  initial
+    begin
+      $dumpfile("design.vcd");
+      $dumpvars(0,tb);
+      $monitor( " Sum of first%d terms is%d",DP.nw,DP.rw);
+    end
+endmodule
+
+    
+// similarly for 5
+
+initial
+    begin
+      #10 start=1; data_in=0;
+      #10 start=1; data_in=5;
+      
+     
+      #60 $finish;
+    end
+    // similarly for 8
+
+initial
+    begin
+      #10 start=1; data_in=0;
+      #10 start=1; data_in=8;
+      
+     
+      #90 $finish;
+    end
+    
+    // and so on change the input values and adjust the delay accordingly to get the appropriate result
+    // I have mentioned some examples above 
+    // iF there is a better way to test multiple values at a time then please give suggestions
+    
